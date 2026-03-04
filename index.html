@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ca" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="FILMCAT — Totes les pel·lícules en català als cinemes de Catalunya. Horaris, sessions i cinemes actualitzats diàriament.">
+<meta name="theme-color" content="#0a0a0c">
+<!-- Security headers -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://image.tmdb.org data: blob:; connect-src https://api.themoviedb.org https://www.youtube.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=()">
+<title>FILMCAT — Cinema en Català</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & TOKENS ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red: #C0392B; --red-light: #E74C3C; --red-dark: #922B21; --red-focus: #ff6b5b;
+  --bg: #0a0a0c; --bg2: #111115; --bg3: #18181e; --surface: #1e1e26; --surface2: #252530;
+  --border: rgba(255,255,255,0.08); --text: #f0f0f0; --text-mid: rgba(240,240,240,0.72);
+  --muted: rgba(255,255,255,0.45); --gold: #e8c97a;
+  --px: clamp(16px, 4vw, 48px); --r-card: 12px; --r-modal: 20px;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 16px; line-height: 1.5; overflow-x: hidden; min-height: 100vh; }
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+/* ── ACCESSIBILITY ── */
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.skip-link { position: absolute; top: -100px; left: 16px; background: var(--red); color: white; padding: 10px 20px; border-radius: 0 0 8px 8px; font-weight: 700; font-size: 0.875rem; z-index: 9999; text-decoration: none; transition: top 0.2s; }
+.skip-link:focus { top: 0; }
+:focus-visible { outline: 3px solid var(--red-focus); outline-offset: 3px; border-radius: 4px; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--red-focus); outline-offset: 3px; border-radius: 6px; }
+/* ── GRAIN ── */
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9990; opacity: 0.28; }
+/* ── HEADER ── */
+header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; justify-content: space-between; padding: 0.75rem var(--px); min-height: 64px; background: linear-gradient(to bottom, rgba(10,10,12,0.97) 0%, rgba(10,10,12,0) 100%); flex-wrap: wrap; gap: 8px; }
+.logo-wrap { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); animation: float 7s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.logo-svg { width: 34px; height: 30px; flex-shrink: 0; filter: drop-shadow(0 4px 14px rgba(192,57,43,.55)); }
+.logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 4px; line-height: 1; }
+nav { display: flex; align-items: center; gap: 24px; }
+nav > a { color: var(--muted); text-decoration: none; font-size: 0.8rem; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; transition: color 0.2s; padding: 6px 2px; border-bottom: 2px solid transparent; }
+nav > a:hover { color: var(--text); border-color: var(--red); }
+.nav-live { background: var(--red); color: white; font-size: 0.625rem; font-weight: 700; letter-spacing: 1.5px; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
+.hamburger { display: none; background: none; border: none; cursor: pointer; padding: 6px 2px; color: var(--text); align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+.hamburger .menu-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 3px; pointer-events: none; transition: color 0.2s; }
+.hamburger[aria-expanded="true"] .menu-label { color: var(--red-light); }
+.mobile-nav { display: none; position: fixed; inset: 4rem 0 0; background: rgba(10,10,12,0.97); z-index: 190; padding: 2rem var(--px); flex-direction: column; gap: 4px; backdrop-filter: blur(12px); }
+.mobile-nav.open { display: flex; }
+.mobile-nav a { color: var(--text); text-decoration: none; font-size: 1.625rem; font-family: 'Bebas Neue', sans-serif; letter-spacing: 3px; padding: 0.875rem 0; border-bottom: 1px solid var(--border); }
+/* ── HERO ── */
+.hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 5rem var(--px) clamp(1.75rem, 4vw, 2.75rem); overflow: hidden; }
+.hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 65% 35%, rgba(192,57,43,.14) 0%, transparent 60%), radial-gradient(ellipse at 15% 75%, rgba(146,43,33,.09) 0%, transparent 50%); }
+.hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%); }
+.hero-content { position: relative; z-index: 2; }
+.hero-eyebrow { font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 4px; color: var(--red-light); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.hero-eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--red); flex-shrink: 0; }
+h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.25rem, 6vw, 4.5rem); line-height: 0.92; letter-spacing: 2px; margin-bottom: 14px; }
+h1 em { color: var(--red-light); font-style: normal; }
+.hero-sub { font-size: clamp(0.8rem, 1.5vw, 0.95rem); color: var(--text-mid); font-weight: 300; max-width: 500px; line-height: 1.6; margin-bottom: 20px; display: none; }
+.hero-stats { display: none; }
+.stat { display: flex; flex-direction: column; gap: 3px; }
+.stat-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.625rem,4vw,2.125rem); line-height: 1; }
+.stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.scroll-hint { position: absolute; bottom: 24px; right: var(--px); display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 0.55rem; letter-spacing: 2px; text-transform: uppercase; }
+.scroll-line { width: 1px; height: 36px; background: linear-gradient(to bottom, var(--red), transparent); animation: scrollAnim 1.8s ease-in-out infinite; }
+@keyframes scrollAnim { 0% { transform: scaleY(0); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform: scaleY(1); transform-origin: bottom; } 100%{ transform: scaleY(0); transform-origin: bottom; } }
+/* ── MAIN ── */
+main { padding: 0 var(--px) 80px; }
+/* ── FILTER BAR ── */
+.filter-bar { display: flex; gap: 0.5rem; overflow-x: auto; scrollbar-width: none; padding-bottom: 0.25rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.filter-bar::-webkit-scrollbar { display: none; }
+.filter-btn { flex-shrink: 0; padding: 0.5rem 1.1rem; border-radius: 40px; border: 1.5px solid var(--border); background: transparent; color: var(--text-mid); font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.18s; text-transform: uppercase; min-height: 44px; }
+.filter-btn:hover { border-color: rgba(192,57,43,.5); color: var(--text); }
+.filter-btn.active { background: var(--red); border-color: var(--red); color: white; }
+/* ── SECTION HEADER ── */
+.section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; padding-top: 0; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.625rem,5vw,2.625rem); letter-spacing: 3px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.section-title::after { content: ''; height: 3px; width: 36px; background: var(--red); display: inline-block; vertical-align: middle; margin-bottom: 3px; }
+.section-more { font-size: 0.75rem; color: var(--red-light); letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 4px 2px; white-space: nowrap; }
+.section-more:hover { text-decoration: underline; }
+/* ── CAROUSEL ── */
+.carousel-wrap { }
+.carousel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+/* ── CARD ── */
+.card { cursor: pointer; position: relative; border-radius: var(--r-card); overflow: hidden; background: var(--surface); transition: transform 0.3s cubic-bezier(.34,1.56,.64,1); border: 1.5px solid transparent; }
+.card:hover { transform: translateY(-8px) scale(1.02); }
+.card:focus-visible { border-color: var(--red-focus); outline: none; transform: translateY(-4px); }
+.card-img-wrap { width: 100%; aspect-ratio: 2/3; overflow: hidden; position: relative; background: var(--bg3); }
+.card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+.card:hover .card-img-wrap img { transform: scale(1.05); }
+.poster-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; position: absolute; inset: 0; }
+.poster-placeholder .abbr { font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.375rem,5vw,1.875rem); color: rgba(255,255,255,0.7); letter-spacing: 3px; text-align: center; }
+.poster-placeholder .pp-title { font-size: 0.65rem; color: rgba(255,255,255,0.35); letter-spacing: 1px; text-align: center; line-height: 1.3; }
+.card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.3) 50%, transparent 100%); opacity: 0; transition: opacity 0.25s; display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 12px; pointer-events: none; }
+.card:hover .card-overlay, .card:focus-visible .card-overlay { opacity: 1; }
+.card-overlay-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.05rem; letter-spacing: 1px; margin-bottom: 3px; }
+.card-overlay-sessions { font-size: 0.7rem; color: var(--red-light); }
+.card-info { padding: 11px 11px 13px; }
+.card-title { font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; overflow-wrap: break-word; }
+.card-meta { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--muted); flex-wrap: wrap; }
+.badge { background: rgba(192,57,43,.18); border: 1px solid rgba(192,57,43,.3); color: var(--red-light); padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.65rem; font-weight: 700; letter-spacing: .5px; flex-shrink: 0; }
+.badge.vo { background: rgba(232,201,122,.1); border-color: rgba(232,201,122,.2); color: var(--gold); }
+/* ── SKELETON ── */
+.skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: var(--r-card); }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.skel-card { flex: 0 0 clamp(8rem,21vw,13.5rem); aspect-ratio: 2/3; scroll-snap-align: start; }
+/* ── CINEMA LIST ── */
+.cinema-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.cinema-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-card); padding: 1rem 1.125rem; cursor: pointer; transition: border-color .2s, transform .2s; position: relative; overflow: hidden; }
+.cinema-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red); transform: scaleY(0); transition: transform .2s; }
+.cinema-card:hover { border-color: rgba(192,57,43,.4); transform: translateX(4px); }
+.cinema-card:hover::before { transform: scaleY(1); }
+.cinema-card:focus-visible { outline: none; border-color: var(--red-focus); box-shadow: 0 0 0 3px var(--red-focus); }
+.cinema-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cinema-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+.maps-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  flex-shrink: 0;
+  background: rgba(192,57,43,.12); border: 1.5px solid rgba(192,57,43,.25);
+  color: var(--red-light); padding: 0.45rem 0.75rem; border-radius: 8px;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: .5px;
+  text-decoration: none; transition: background .18s, border-color .18s, transform .15s;
+  min-height: 44px;
+}
+.maps-btn:hover { background: rgba(192,57,43,.28); border-color: var(--red); color: var(--text); transform: translateY(-1px); }
+.maps-btn:focus-visible { outline: 3px solid var(--red-focus); outline-offset: 2px; }
+.cinema-location { font-size: 0.75rem; color: var(--muted); display: flex; align-items: flex-start; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
+.cinema-films-count { font-size: 0.75rem; color: var(--red-light); font-weight: 500; }
+/* ── MODAL ── */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity .25s; backdrop-filter: blur(14px); }
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+.modal { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-modal); max-width: 820px; width: 100%; max-height: 92dvh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--red) transparent; transform: translateY(28px) scale(.97); transition: transform .3s cubic-bezier(.34,1.56,.64,1); position: relative; outline: none; }
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-thumb { background: var(--red); border-radius: 4px; }
+.modal-hero { position: relative; min-height: clamp(8.75rem,25vw,15rem); overflow: hidden; border-radius: var(--r-modal) var(--r-modal) 0 0; }
+.modal-bg { width: 100%; height: 100%; object-fit: cover; filter: blur(3px) brightness(.35); display: block; }
+.modal-hero-content { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: clamp(0.875rem,4vw,1.75rem); background: linear-gradient(to top, rgba(10,10,12,.98) 0%, transparent 65%); gap: 18px; }
+.modal-poster { width: clamp(4.7rem,12vw,6.875rem); aspect-ratio: 2/3; border-radius: 8px; overflow: hidden; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,.55); background: var(--surface); }
+.modal-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.modal-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.5rem,5vw,2.625rem); letter-spacing: 2px; line-height: 1; margin-bottom: 0.5rem; }
+.modal-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { background: rgba(255,255,255,.08); padding: 0.2rem 0.65rem; border-radius: 5px; font-size: 0.7rem; color: var(--muted); letter-spacing: .8px; }
+.modal-body { padding: clamp(1rem,4vw,1.75rem); }
+.modal-synopsis { font-size: 0.875rem; color: var(--text-mid); line-height: 1.75; margin-bottom: 1.75rem; font-weight: 300; }
+.modal-section-title { font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase; color: var(--red-light); margin-bottom: 0.875rem; display: flex; align-items: center; gap: 0.625rem; flex-wrap: wrap; }
+.modal-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.sessions-grid { display: flex; flex-direction: column; gap: 14px; }
+.session-cinema { background: var(--surface); border-radius: 10px; padding: 0.9rem 1.05rem; border: 1px solid var(--border); }
+.session-cinema-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+.session-cinema-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.session-cinema-name { font-size: 0.875rem; font-weight: 600; overflow-wrap: break-word; }
+.session-maps-link {
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px;
+  color: var(--red-light); text-decoration: none;
+  border-bottom: 1px solid rgba(231,76,60,.35);
+  transition: color .15s, border-color .15s;
+  white-space: nowrap; padding-bottom: 1px;
+}
+.session-maps-link:hover { color: var(--text); border-color: var(--text); }
+.session-maps-link:focus-visible { outline: 2px solid var(--red-focus); border-radius: 2px; outline-offset: 2px; }
+.trailer-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.12);
+  color: var(--text); padding: 0.5rem 1rem; border-radius: 8px;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px;
+  text-decoration: none; transition: background .18s, border-color .18s;
+  min-height: 44px; margin-bottom: 1.5rem;
+}
+.trailer-btn:hover { background: rgba(255,0,0,.15); border-color: rgba(255,60,60,.4); color: white; }
+.trailer-btn:focus-visible { outline: 3px solid var(--red-focus); outline-offset: 2px; border-radius: 8px; }
+.trailer-btn svg { flex-shrink: 0; }
+.session-cinema-city { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+.session-times { display: flex; flex-wrap: wrap; gap: 8px; }
+.session-time { background: rgba(192,57,43,.13); border: 1.5px solid rgba(192,57,43,.22); color: var(--text); padding: 0.5rem 0.8rem; border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 0.8rem; cursor: pointer; transition: background .15s, border-color .15s; display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.session-time:hover { background: rgba(192,57,43,.28); border-color: var(--red); }
+.session-time-lang { font-size: 0.6rem; color: var(--red-light); letter-spacing: .8px; }
+.close-btn { position: absolute; top: 0.875rem; right: 0.875rem; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: rgba(0,0,0,.55); border: 1.5px solid var(--border); color: var(--text); font-size: 1.125rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; z-index: 10; line-height: 1; }
+.close-btn:hover { background: rgba(192,57,43,.45); }
+.status-msg { color: var(--muted); font-size: 0.875rem; padding: 20px 0; }
+/* ── ANIMATIONS ── */
+.fade-up { opacity: 0; transform: translateY(22px); animation: fadeUp .55s ease forwards; }
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+.card { animation: fadeUp .45s ease forwards; opacity: 0; }
+.card:nth-child(1){animation-delay:.04s}.card:nth-child(2){animation-delay:.09s}.card:nth-child(3){animation-delay:.14s}.card:nth-child(4){animation-delay:.19s}.card:nth-child(5){animation-delay:.24s}.card:nth-child(6){animation-delay:.29s}.card:nth-child(7){animation-delay:.34s}.card:nth-child(8){animation-delay:.39s}
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(3rem,8vw,5rem) var(--px) clamp(2.25rem,5vw,3.5rem);
+  margin-top: 3.75rem;
+}
+.footer-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(192,57,43,.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 20%, rgba(146,43,33,.1) 0%, transparent 50%);
+}
+.footer-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at 30% 60%, black 10%, transparent 75%);
+}
+.footer-inner {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; gap: 2.5rem;
+}
+.footer-top {
+  display: flex; flex-wrap: wrap; align-items: flex-end;
+  justify-content: space-between; gap: 32px;
+}
+.footer-headline { display: flex; flex-direction: column; gap: 10px; }
+.footer-eyebrow {
+  font-family: 'Space Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 4px; color: var(--red-light); text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px;
+}
+.footer-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--red); flex-shrink: 0; }
+.footer-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.625rem, 7vw, 5.5rem);
+  line-height: 0.92; letter-spacing: 2px;
+}
+.footer-title em { color: var(--red-light); font-style: normal; }
+.footer-stats {
+  display: flex; flex-wrap: wrap; gap: 1.25rem 2.5rem;
+  align-items: flex-end;
+}
+.footer-stat { display: flex; flex-direction: column; gap: 3px; }
+.footer-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.75rem,4vw,2.5rem); line-height: 1; color: var(--text);
+}
+.footer-stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.footer-bottom {
+  display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: 16px;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--border);
+}
+.footer-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); opacity: 0.5; }
+.footer-logo svg { width: 26px; height: 23px; }
+.footer-logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 1.25rem; letter-spacing: 3px; }
+.footer-note { font-size: 0.7rem; color: var(--muted); letter-spacing: .5px; line-height: 1.7; text-align: right; }
+.footer-note a { color: var(--red-light); }
+/* ── MOBILE ── */
+@media (max-width: 640px) {
+  nav { display: none; }
+  .hamburger { display: flex; }
+  h1 { letter-spacing: 1px; }
+  .featured-content { flex-wrap: wrap; }
+  .featured-desc { display: none; }
+  .scroll-hint { display: none; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+  .footer-note { text-align: left; }
+  .carousel { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .skel-card { flex: 0 0 auto; }
+}
+@media (max-width: 400px) {
+  .featured-poster { display: none; }
+}
+/* ── LIGHT MODE ── */
+@media (prefers-color-scheme: light) {
+  :root { --bg: #f4f4f8; --bg2: #ffffff; --bg3: #ebebef; --surface: #e6e6ee; --surface2: #dcdce6; --border: rgba(0,0,0,.1); --text: #111118; --text-mid: rgba(17,17,24,.72); --muted: rgba(17,17,24,.45); --red-focus: #b02319; }
+  body::before { opacity: 0.06; }
+  header { background: linear-gradient(to bottom, rgba(244,244,248,.97), rgba(244,244,248,0)); }
+}
+
+/* ── TEXT ZOOM 200% (WCAG 1.4.4) ── */
+/* All rem values scale with browser/OS text zoom, px values do not.
+   These rules ensure nothing clips or overflows when text is doubled. */
+#cartellera-h { scroll-margin-top: 5rem; }
+@media (min-resolution: 1dpi) {
+  .card-info { padding: 0.7rem 0.7rem 0.875rem; }
+  .cinema-card-top { gap: 0.75rem; }
+}
+/* Ensure filter bar wraps gracefully, never clips */
+.filter-bar { flex-wrap: wrap; }
+/* Session times must wrap at large font sizes */
+.session-times { flex-wrap: wrap; }
+/* Modal tags wrap */
+.modal-tags { flex-wrap: wrap; gap: 0.375rem; }
+/* Ensure modal body is scrollable, never hidden */
+.modal { overflow-y: auto; }
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Saltar al contingut principal</a>
+
+<header role="banner">
+  <a class="logo-wrap" href="#" aria-label="FILMCAT - Inici">
+    <svg class="logo-svg" viewBox="0 0 100 88" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="lg1" x1="0" y1="88" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#922B21"/>
+          <stop offset="100%" stop-color="#E74C3C"/>
+        </linearGradient>
+        <linearGradient id="lg2" x1="50" y1="0" x2="0" y2="88" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#C0392B" stop-opacity=".85"/>
+          <stop offset="100%" stop-color="#7B241C"/>
+        </linearGradient>
+      </defs>
+      <polygon points="50,0 100,88 0,88" fill="url(#lg1)"/>
+      <polygon points="50,0 50,60 0,88" fill="url(#lg2)"/>
+    </svg>
+    <span class="logo-text">FILMCAT</span>
+  </a>
+  <nav aria-label="Navegació principal">
+    <a href="#cartellera-h">Cartellera</a>
+    <a href="#cinemes">Cinemes</a>
+  </nav>
+  <button class="hamburger" aria-label="Obrir menú de navegació" aria-expanded="false" aria-controls="mobile-nav" onclick="toggleNav(this)">
+    <span class="menu-label">MENU</span>
+  </button>
+</header>
+
+<nav id="mobile-nav" class="mobile-nav" aria-label="Menú mòbil" aria-hidden="true">
+  <a href="#cartellera-h" onclick="closeMobileNav()">Cartellera</a>
+  <a href="#cinemes" onclick="closeMobileNav()">Cinemes</a>
+</nav>
+
+<section class="hero" aria-labelledby="hero-heading">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="hero-content fade-up" style="animation-delay:.15s">
+    <p class="hero-eyebrow" aria-hidden="true">Cinema en català</p>
+    <h1 id="hero-heading">DESCOBREIX<br>EL CINEMA<br>EN <em>CATALÀ</em></h1>
+    <p class="hero-sub">Totes les pel·lícules en català als cinemes de Catalunya. Horaris, sessions i cinemes actualitzats cada dia.</p>
+    <div class="hero-stats" role="region" aria-label="Estadístiques">
+      <div class="stat"><span class="stat-num" id="filmCount" aria-live="polite">—</span><span class="stat-label">Pel·lícules</span></div>
+      <div class="stat"><span class="stat-num" id="cinemaCount" aria-live="polite">—</span><span class="stat-label">Cinemes</span></div>
+      <div class="stat"><span class="stat-num" id="sessionCount" aria-live="polite">—</span><span class="stat-label">Sessions avui</span></div>
+    </div>
+  </div>
+
+</section>
+
+<main id="main-content">
+
+
+  <section aria-labelledby="cartellera-h" id="avui" style="padding-top: 32px">
+    <div class="filter-bar" role="group" aria-label="Filtrar pel·lícules per versió">
+      <button class="filter-btn active" onclick="filterFilms('all',this)" aria-pressed="true">Totes</button>
+      <button class="filter-btn" onclick="filterFilms('VD',this)" aria-pressed="false">Doblada (VD)</button>
+      <button class="filter-btn" onclick="filterFilms('VO',this)" aria-pressed="false">Versió Original</button>
+      <button class="filter-btn" onclick="filterFilms('VOSC',this)" aria-pressed="false">Sub. Català</button>
+
+    </div>
+    <div class="section-header">
+      <h2 class="section-title" id="cartellera-h" style="scroll-margin-top: 80px">En Cartellera</h2>
+
+    </div>
+    <div class="carousel-wrap">
+      <div class="carousel" id="mainCarousel" role="list" aria-label="Pel·lícules en cartellera"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="upcoming-h" style="margin-top: clamp(3rem, 8vw, 5rem)">
+    <div class="section-header">
+      <h2 class="section-title" id="upcoming-h">Pròximes Estrenes</h2>
+    </div>
+    <div class="carousel-wrap">
+      <div class="carousel" id="upcomingCarousel" role="list" aria-label="Pròximes estrenes en català"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="cinemes-h" id="cinemes" style="margin-top: clamp(3rem, 8vw, 5rem)">
+    <div class="section-header">
+      <h2 class="section-title" id="cinemes-h">Cinemes</h2>
+
+    </div>
+    <div class="cinema-list" id="cinemaList" role="list"></div>
+  </section>
+</main>
+
+<footer role="contentinfo">
+  <div class="footer-bg" aria-hidden="true"></div>
+  <div class="footer-grid" aria-hidden="true"></div>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-headline">
+        <p class="footer-eyebrow" aria-hidden="true">Cinema en català</p>
+        <div class="footer-title" aria-hidden="true">EL CINEMA<br>EN <em>CATALÀ</em></div>
+      </div>
+      <div class="footer-stats" role="region" aria-label="Estadístiques de la cartellera">
+        <div class="footer-stat">
+          <span class="footer-stat-num" id="footerFilmCount" aria-live="polite">—</span>
+          <span class="footer-stat-label">Pel·lícules</span>
+        </div>
+        <div class="footer-stat">
+          <span class="footer-stat-num" id="footerCinemaCount" aria-live="polite">—</span>
+          <span class="footer-stat-label">Cinemes</span>
+        </div>
+        <div class="footer-stat">
+          <span class="footer-stat-num" id="footerSessionCount" aria-live="polite">—</span>
+          <span class="footer-stat-label">Sessions avui</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <a class="footer-logo" href="#" aria-label="FILMCAT - Tornar a l'inici">
+        <svg viewBox="0 0 100 88" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="flg1" x1="0" y1="88" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#922B21"/><stop offset="100%" stop-color="#E74C3C"/>
+            </linearGradient>
+            <linearGradient id="flg2" x1="50" y1="0" x2="0" y2="88" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#C0392B" stop-opacity=".85"/><stop offset="100%" stop-color="#7B241C"/>
+            </linearGradient>
+          </defs>
+          <polygon points="50,0 100,88 0,88" fill="url(#flg1)"/>
+          <polygon points="50,0 50,60 0,88" fill="url(#flg2)"/>
+        </svg>
+        <span class="footer-logo-text">FILMCAT</span>
+      </a>
+      <div class="footer-note">
+        Dades: <a href="https://www.gencat.cat/llengua/cinema/" target="_blank" rel="noopener noreferrer">Portal Cinema en Català — Generalitat de Catalunya</a><br>
+        Actualitzat diàriament · Llicència de dades obertes
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle"
+     onclick="closeModalOutside(event)">
+  <div class="modal" id="modal" tabindex="-1">
+    <button class="close-btn" onclick="closeModal()" aria-label="Tancar">✕</button>
+    <div class="modal-hero" aria-hidden="true">
+      <img class="modal-bg" id="modalBgImg" src="" alt="" role="presentation">
+      <div class="modal-hero-content">
+        <div class="modal-poster"><img id="modalPosterImg" src="" alt=""></div>
+        <div>
+          <h2 class="modal-title" id="modalTitle"></h2>
+          <div class="modal-tags" id="modalTags"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <p class="modal-synopsis" id="modalSynopsis"></p>
+      <div id="modalTrailer"></div>
+      <h3 class="modal-section-title">Sessions disponibles</h3>
+      <div class="sessions-grid" id="modalSessions" role="list" aria-label="Sessions disponibles"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── SECURITY: sanitize all external data before DOM insertion ──
+// Prevents XSS if TMDB or Gencat data ever contains malicious strings
+function sanitize(str) {
+  if (!str && str !== 0) return '';
+  const el = document.createElement('div');
+  el.textContent = String(str);
+  return el.innerHTML; // browser-escaped HTML entities
+}
+
+function sanitizeUrl(url) {
+  // Only allow https:// and maps:// URLs — block javascript:, data:, etc.
+  if (!url) return '#';
+  const trimmed = url.trim();
+  if (/^https:\/\//i.test(trimmed) || /^http:\/\//i.test(trimmed)) return trimmed;
+  return '#';
+}
+
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
+const TMDB_BIG = 'https://image.tmdb.org/t/p/w780';
+const TMDB_KEY = '2dca580c2a14b55200e784d157207b4d';
+
+// NO hardcoded IDs — titles and years are used to search & verify on TMDB
+const filmsData = [
+  { id:1, searchTitle:"Balandrau", year:2026, version:"VD", genre:"Drama · Aventura", duration:"116 min",
+    title:"Balandrau, Vent Salvatge",
+    synopsis:"Basada en fets reals, narra el temporal més violent que s'ha viscut al Pirineu català. El 30 de desembre del 2000, nou excursionistes moren quan el «torb» desencadena la pitjor tempesta de la historia dels Pirineus. Amb Álvaro Cervantes, Bruna Cusí i Marc Martínez.",
+    color1:"#1a0808", color2:"#3d1010", posterPath:null, backdropPath:null,
+    sessions:[{cinema:"Cinemes Verdi",city:"Barcelona",times:["16:30","19:00","21:30"],lang:"VD"},{cinema:"Bages Centre",city:"Manresa",times:["18:00","20:30"],lang:"VD"},{cinema:"Yelmo Icaria",city:"Barcelona",times:["17:15","20:00","22:15"],lang:"VOSC"},{cinema:"Cinesa Diagonal Mar",city:"Barcelona",times:["16:00","19:30","22:00"],lang:"VD"}]},
+  { id:2, searchTitle:"Zootopia 2", year:2025, version:"VD", genre:"Animació · Família", duration:"108 min",
+    title:"Zootròpolis 2",
+    synopsis:"Judy Hopps i Nick Wilde tornen per una nova aventura a la gran metròpoli dels animals. Quan el misteriós Gary De'Snake apareix i capgira Zootròpolis, el duo haurà d'anar de cobertura als racons més inesperats de la ciutat.",
+    color1:"#0a1a1a", color2:"#0d3a2a", posterPath:null, backdropPath:null,
+    sessions:[{cinema:"Cinema Catalunya",city:"Terrassa",times:["10:30","12:30","16:00","18:30"],lang:"VD"},{cinema:"Multicines Eix Macià",city:"Sabadell",times:["11:00","13:00","17:30","20:00"],lang:"VD"},{cinema:"Cinesa La Maquinista",city:"Barcelona",times:["10:00","12:15","16:30","19:00"],lang:"VD"}]},
+  { id:3, searchTitle:"Mufasa The Lion King", year:2024, version:"VD", genre:"Animació · Drama", duration:"118 min",
+    title:"Mufasa: El Rei Lleó",
+    synopsis:"La historia dels orígens de Mufasa, el pare de Simba. Un jove orfe es guanya el cor d'un aliat inesperat i forja la seva llegenda per convertir-se en el Rei Lleó.",
+    color1:"#1a1005", color2:"#3d2808", posterPath:null, backdropPath:null,
+    sessions:[{cinema:"Cinesa Parc Vallès",city:"Terrassa",times:["10:30","12:45","16:00","18:30"],lang:"VD"},{cinema:"Cines Imperial",city:"Sabadell",times:["11:00","13:15","17:00","19:30"],lang:"VD"}]},
+  { id:4, searchTitle:"Wicked", year:2024, version:"VOSC", genre:"Musical · Fantasia", duration:"160 min",
+    title:"Wicked",
+    synopsis:"L'origen de la bruixa dolenta de l'Oeste. La historia d'amistat entre Elphaba i Glinda. Una producció musical espectacular amb Cynthia Erivo i Ariana Grande.",
+    color1:"#0d0a1a", color2:"#1e0a35", posterPath:null, backdropPath:null,
+    sessions:[{cinema:"Yelmo Icaria",city:"Barcelona",times:["17:00","20:30"],lang:"VOSC"},{cinema:"Cinemes Verdi",city:"Barcelona",times:["19:00","22:00"],lang:"VOSC"}]},
+  { id:5, searchTitle:"Moana 2", year:2024, version:"VD", genre:"Animació · Aventura", duration:"100 min",
+    title:"Moana 2",
+    synopsis:"Moana emprèn un viatge per mars desconeguts per descobrir un avantpassat llegendari. Una nova aventura d'autodescobriment i connexió amb els orígens.",
+    color1:"#051a1a", color2:"#073040", posterPath:null, backdropPath:null,
+    sessions:[{cinema:"Filmoteca de Catalunya",city:"Barcelona",times:["11:00","13:00","16:30"],lang:"VD"},{cinema:"Cinema Truffaut",city:"Girona",times:["10:30","12:30"],lang:"VD"}]},
+  { id:6, searchTitle:"Deadpool Wolverine", year:2024, version:"VOSC", genre:"Acció · Comèdia", duration:"128 min",
+    title:"Deadpool & Wolverine",
+    synopsis:"Wade Wilson es retroba amb Logan en una missió que posarà en joc el destí del multivers de Marvel. La primera col·laboració en pantalla entre Deadpool i Wolverine.",
+    color1:"#1a0808", color2:"#3a0a0a", posterPath:null, backdropPath:null,
+    sessions:[{cinema:"Ocine Tarragona",city:"Tarragona",times:["20:30","22:45"],lang:"VOSC"},{cinema:"Cinesa Diagonal Mar",city:"Barcelona",times:["19:00","21:30"],lang:"VOSC"}]},
+  { id:7, searchTitle:"Sonic the Hedgehog 3", year:2024, version:"VD", genre:"Acció · Aventura", duration:"110 min",
+    title:"Sonic 3: La Pel·lícula",
+    synopsis:"Sonic, Knuckles i Tails s'uneixen contra Shadow, un adversari formidable amb poders misteriosos i una connexió sorprenent amb el passat de Sonic.",
+    color1:"#050a1a", color2:"#0a1a3d", posterPath:null, backdropPath:null,
+    sessions:[{cinema:"Ocine Lleida",city:"Lleida",times:["16:30","19:00"],lang:"VD"},{cinema:"Bages Centre",city:"Manresa",times:["17:00","19:30"],lang:"VD"}]},
+  { id:8, searchTitle:"Paddington in Peru", year:2024, version:"VD", genre:"Comèdia · Família", duration:"106 min",
+    title:"Paddington a Perú",
+    synopsis:"L'adorable ós Paddington torna al Perú per retrobar la seva família en una aventura intercontinental plena de tendresa, humor i descobriments.",
+    color1:"#1a1205", color2:"#3d2a08", posterPath:null, backdropPath:null,
+    sessions:[{cinema:"Cinema Catalunya",city:"Terrassa",times:["10:00","12:00","16:30"],lang:"VD"},{cinema:"Cinesa Diagonal Mar",city:"Barcelona",times:["11:30","14:00","17:30"],lang:"VD"}]},
+];
+
+const upcomingData = [
+  { id:101, searchTitle:"Justice League Crisis on Infinite Earths", year:2024, version:"VOSC", genre:"Animació · Acció", duration:"94 min",
+    title:"Justice League: Crisis",
+    synopsis:"La Lliga de la Justícia s'enfronta a la seva crisi existencial més gran. El multiunivers amenaça amb desaparèixer.",
+    color1:"#0a0a1a", color2:"#151535", posterPath:null, backdropPath:null, sessions:[] },
+  { id:102, searchTitle:"La Fiera", year:2026, version:"VD", genre:"Drama · Esports", duration:"118 min",
+    title:"La Fiera",
+    synopsis:"La história real de cinc amics units per la passió per l'aventura extrema. Una de les grans apostes del cinema català del 2026.",
+    color1:"#0a0d1a", color2:"#10173d", posterPath:null, backdropPath:null, sessions:[] },
+  { id:103, searchTitle:"The SpongeBob Movie Saving Bikini Bottom", year:2025, version:"VD", genre:"Animació · Família", duration:"91 min",
+    title:"Bob Esponja: Aventura Pirata",
+    synopsis:"Bob Esponja i els seus amics s'embarquen en una aventura marina plena d'acció i humor.",
+    color1:"#0a131a", color2:"#0d2540", posterPath:null, backdropPath:null, sessions:[] },
+];
+
+const cinemasData = [
+  {name:"Cinemes Verdi",city:"Barcelona",address:"C/ Verdi 32, Gràcia",films:6},
+  {name:"Cinema Catalunya",city:"Terrassa",address:"C/ Sant Pere 9",films:4},
+  {name:"Filmoteca de Catalunya",city:"Barcelona",address:"Pl. Salvador Seguí 1-9",films:5},
+  {name:"Bages Centre",city:"Manresa",address:"C/ Àngel Guimerà 16",films:3},
+  {name:"Cinesa Diagonal Mar",city:"Barcelona",address:"C/ Llull 314-318",films:7},
+  {name:"Yelmo Icaria",city:"Barcelona",address:"C/ Salvador Espriu 61",films:5},
+  {name:"Ocine Lleida",city:"Lleida",address:"Av. Garrigues s/n",films:4},
+  {name:"Cinema Truffaut",city:"Girona",address:"C/ Portal Nou 7",films:3},
+  {name:"Cines Imperial",city:"Sabadell",address:"C/ Blasco de Garay 2",films:4},
+  {name:"Multicines Eix Macià",city:"Sabadell",address:"C/ Macià 1",films:5},
+  {name:"Ocine Tarragona",city:"Tarragona",address:"C/ Bisbe Sivilla 7",films:3},
+  {name:"Cinesa Parc Vallès",city:"Terrassa",address:"Rambla Francesc Macià 50",films:6},
+];
+
+// ── TMDB: fetch trailer from YouTube via TMDB videos endpoint ──
+async function fetchTrailer(tmdbId) {
+  if (!tmdbId) return null;
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/movie/${tmdbId}/videos?api_key=${TMDB_KEY}&language=en-US`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    // Find the best trailer: official YouTube trailer first
+    const trailer = data.results?.find(v =>
+      v.site === 'YouTube' && v.type === 'Trailer' && v.official
+    ) || data.results?.find(v =>
+      v.site === 'YouTube' && v.type === 'Trailer'
+    ) || data.results?.find(v =>
+      v.site === 'YouTube' && v.type === 'Teaser'
+    );
+    return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ── TMDB: search by title + verify year ──
+// Instead of hardcoded IDs (which can be wrong), we search TMDB by title,
+// then verify the result year matches within ±1 year before trusting the poster.
+async function fetchPosters(films) {
+  await Promise.allSettled(films.map(async film => {
+    try {
+      const query = encodeURIComponent(film.searchTitle);
+      const r = await fetch(
+        `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${query}&include_adult=false`,
+        { signal: AbortSignal.timeout(6000) }
+      );
+      if (!r.ok) return;
+      const data = await r.json();
+      if (!data.results || data.results.length === 0) return;
+
+      // Find the result whose release year is closest to our expected year
+      // Accept a ±1 year margin to account for international release differences
+      const match = data.results.find(m => {
+        if (!m.release_date) return false;
+        const resultYear = parseInt(m.release_date.slice(0, 4));
+        return Math.abs(resultYear - film.year) <= 1 && m.poster_path;
+      });
+
+      if (match) {
+        // Validate poster_path: must be /alphanum.jpg format only
+        const pathRe = /^\/[a-zA-Z0-9_\-]+\.(jpg|png|webp)$/;
+        film.posterPath = pathRe.test(match.poster_path) ? match.poster_path : null;
+        film.backdropPath = pathRe.test(match.backdrop_path) ? match.backdrop_path : null;
+        film._tmdbVerified = true;
+        film._tmdbId = match.id; // store for trailer fetch
+      }
+      // If no year-verified match found → posterPath stays null → placeholder shown
+    } catch(e) {
+      // Network error or timeout → silently show placeholder
+    }
+  }));
+}
+
+// ── PLACEHOLDER ──
+function placeholder(film) {
+  const safeTitle = sanitize(film.title);
+  const abbr = sanitize(
+    film.title.split(' ').filter(w=>w.length>2).map(w=>w[0]).join('').toUpperCase().slice(0,3)
+  );
+  // color values come from our own data objects — validate format
+  const colorRe = /^#[0-9a-fA-F]{3,6}$/;
+  const c1 = colorRe.test(film.color1) ? film.color1 : '#111';
+  const c2 = colorRe.test(film.color2) ? film.color2 : '#222';
+  return `<div class="poster-placeholder" style="background:linear-gradient(160deg,${c1} 0%,${c2} 100%)" aria-hidden="true">
+    <svg viewBox="0 0 100 88" width="38" style="opacity:.25"><polygon points="50,0 100,88 0,88" fill="white"/></svg>
+    <div class="abbr">${abbr}</div>
+    <div class="pp-title">${safeTitle}</div>
+  </div>`;
+}
+
+// ── CARD ──
+function createCard(film) {
+  const sc = film.sessions.reduce((a,s)=>a+s.times.length,0);
+  const isUpcoming = film.sessions.length === 0;
+  const card = document.createElement('article');
+  card.className = 'card';
+  card.setAttribute('role','listitem');
+  card.setAttribute('tabindex','0');
+  card.setAttribute('aria-label',`${sanitize(film.title)} (${sanitize(String(film.year))}), versió ${sanitize(film.version)}${!isUpcoming?`, ${sc} sessions avui`:', pròximament'}`);
+
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'card-img-wrap';
+
+  if (film.posterPath) {
+    const img = new Image();
+    img.src = TMDB_IMG + film.posterPath;
+    img.alt = `Pòster oficial de ${film.title}`;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.width = 215; img.height = 322;
+    img.onerror = () => { imgWrap.innerHTML = placeholder(film); };
+    imgWrap.appendChild(img);
+  } else {
+    imgWrap.innerHTML = placeholder(film);
+  }
+
+  imgWrap.insertAdjacentHTML('beforeend', `
+    <div class="card-overlay" aria-hidden="true">
+      <div class="card-overlay-title">${sanitize(film.title)}</div>
+      <div class="card-overlay-sessions">${!isUpcoming ? `${sc} sessions avui` : 'Pròximament'}</div>
+    </div>`);
+
+  card.appendChild(imgWrap);
+  card.insertAdjacentHTML('beforeend',`
+    <div class="card-info">
+      <div class="card-title">${sanitize(film.title)}</div>
+      <div class="card-meta">
+        <span class="badge ${['VO','VOSC','VOSE'].includes(film.version)?'vo':''}">${sanitize(film.version)}</span>
+        <span>${sanitize(film.genre.split(' · ')[0])}</span>
+      </div>
+    </div>`);
+
+  const fn = () => openModal(film);
+  card.addEventListener('click', fn);
+  card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();} });
+  return card;
+}
+
+// ── RENDER ──
+function renderAll() {
+  const main = document.getElementById('mainCarousel');
+  const upcoming = document.getElementById('upcomingCarousel');
+  if (!main || !upcoming) return; // guard against missing elements
+  main.innerHTML = '';
+  upcoming.innerHTML = '';
+  filmsData.forEach(f => main.appendChild(createCard(f)));
+  upcomingData.forEach(f => upcoming.appendChild(createCard(f)));
+}
+
+function renderCinemas() {
+  cinemasData.forEach(c => {
+    const el = document.createElement('article');
+    el.className = 'cinema-card';
+    el.setAttribute('role','listitem');
+    el.setAttribute('tabindex','0');
+    const sName    = sanitize(c.name);
+    const sAddress = sanitize(c.address);
+    const sCity    = sanitize(c.city);
+    const sFilms   = sanitize(String(c.films));
+    el.setAttribute('aria-label',`${sName}, ${sCity}, ${sFilms} pel·lícules en català`);
+    const mapsQuery = encodeURIComponent(`${c.name}, ${c.address}, ${c.city}`);
+    const mapsUrl   = sanitizeUrl(`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`);
+    el.innerHTML = `
+      <div class="cinema-card-top">
+        <div>
+          <div class="cinema-name">${sName}</div>
+          <div class="cinema-location">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            ${sAddress} · ${sCity}
+          </div>
+          <div class="cinema-films-count">▶ ${sFilms} pel·lícules en català</div>
+        </div>
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"
+           class="maps-btn" aria-label="Obrir ${sName} a Google Maps">
+          Veure
+        </a>
+      </div>`;
+    // Prevent card click from firing when Maps button is clicked
+    el.querySelector('.maps-btn')?.addEventListener('click', e => e.stopPropagation());
+    document.getElementById('cinemaList').appendChild(el);
+  });
+}
+
+function updateStats() {
+  const ts = filmsData.reduce((a,f)=>a+f.sessions.reduce((b,s)=>b+s.times.length,0),0);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ids = ['filmCount','cinemaCount','sessionCount','footerFilmCount','footerCinemaCount','footerSessionCount'];
+  ids.forEach((id,i) => {
+    const target = [filmsData.length, cinemasData.length, ts, filmsData.length, cinemasData.length, ts][i];
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (reduced) { el.textContent = target; return; }
+    let cur = 0; const step = target/25;
+    const t = setInterval(() => { cur += step; if(cur>=target){el.textContent=target;clearInterval(t);}else{el.textContent=Math.floor(cur);} }, 35);
+  });
+}
+
+// ── MODAL ──
+let lastFocused;
+function openModal(film) {
+  lastFocused = document.activeElement;
+  // textContent is inherently XSS-safe (no HTML parsing)
+  document.getElementById('modalTitle').textContent = film.title || '';
+  document.getElementById('modalSynopsis').textContent = film.synopsis || '';
+
+  const pi = document.getElementById('modalPosterImg');
+  if (film.posterPath) { pi.src = TMDB_IMG+film.posterPath; pi.alt = `Pòster de ${sanitize(film.title)}`; }
+  else { pi.src=''; pi.alt=''; document.querySelector('.modal-poster').innerHTML = placeholder(film); }
+
+  const bi = document.getElementById('modalBgImg');
+  if (film.backdropPath) { bi.src = TMDB_BIG+film.backdropPath; bi.style.background=''; }
+  else { bi.src=''; bi.style.background=`linear-gradient(135deg,${film.color1},${film.color2})`; }
+
+  document.getElementById('modalTags').innerHTML =
+    `<span class="tag">${sanitize(film.version)}</span><span class="tag">${sanitize(film.genre)}</span><span class="tag">${sanitize(film.duration)}</span><span class="tag">${sanitize(String(film.year))}</span>`;
+
+  const sg = document.getElementById('modalSessions');
+  if (!film.sessions.length) {
+    sg.innerHTML = '<p class="status-msg" role="status">Properament — Sessions pendent de confirmar</p>';
+  } else {
+    sg.innerHTML = film.sessions.map(s=>{
+      const sCinema = sanitize(s.cinema);
+      const sCity = sanitize(s.city);
+      const sLang = sanitize(s.lang);
+      const isVO = ['VO','VOSC','VOSE'].includes(s.lang);
+      const mapsQ = encodeURIComponent(`${s.cinema}, ${s.city}`);
+      const mapsLink = sanitizeUrl(`https://www.google.com/maps/search/?api=1&query=${mapsQ}`);
+      const times = s.times.map(t=>{
+        const sTime = sanitize(t);
+        return `<button class="session-time" aria-label="${sTime} a ${sCinema}, versió ${sLang}">${sTime} <span class="session-time-lang" aria-hidden="true">${sLang}</span></button>`;
+      }).join('');
+      return `<div class="session-cinema" role="listitem">
+        <div class="session-cinema-header">
+          <div>
+            <div class="session-cinema-name-row">
+              <span class="session-cinema-name">${sCinema}</span>
+              <a href="${mapsLink}" target="_blank" rel="noopener noreferrer"
+                 class="session-maps-link" aria-label="Veure ${sCinema} a Google Maps">Veure</a>
+            </div>
+            <div class="session-cinema-city">${sCity}</div>
+          </div>
+          <span class="badge ${isVO?'vo':''}">${sLang}</span>
+        </div>
+        <div class="session-times" role="group" aria-label="Horaris a ${sCinema}">${times}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Fetch trailer async — show button when ready
+  const trailerDiv = document.getElementById('modalTrailer');
+  trailerDiv.innerHTML = '';
+  if (film._tmdbId) {
+    fetchTrailer(film._tmdbId)
+      .then(url => {
+        if (!url) return;
+        const safeUrl = sanitizeUrl(url);
+        trailerDiv.innerHTML = `
+          <a href="${safeUrl}" target="_blank" rel="noopener noreferrer"
+             class="trailer-btn" aria-label="Veure el tràiler de ${sanitize(film.title)} a YouTube">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/>
+            </svg>
+            Veure tràiler
+          </a>`;
+      })
+      .catch(() => { /* trailer not available — silent fail */ });
+  }
+
+  const bd = document.getElementById('modalBackdrop');
+  bd.classList.add('open');
+  bd.removeAttribute('aria-hidden');
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => document.getElementById('modal').focus());
+}
+
+function closeModal() {
+  const bd = document.getElementById('modalBackdrop');
+  bd.classList.remove('open');
+  bd.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+  lastFocused?.focus();
+}
+
+function closeModalOutside(e) { if(e.target===document.getElementById('modalBackdrop'))closeModal(); }
+
+document.getElementById('modal').addEventListener('keydown', e => {
+  if (e.key==='Escape') { closeModal(); return; }
+  if (e.key!=='Tab') return;
+  const focusable = [...document.getElementById('modal').querySelectorAll('button,[tabindex]:not([tabindex="-1"])')];
+  const first = focusable[0], last = focusable[focusable.length-1];
+  if (e.shiftKey) { if(document.activeElement===first){e.preventDefault();last.focus();} }
+  else { if(document.activeElement===last){e.preventDefault();first.focus();} }
+});
+
+// ── FILTER ──
+function filterFilms(version, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+  btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
+  const c = document.getElementById('mainCarousel');
+  if (!c) return;
+  c.innerHTML = '';
+  const filtered = version==='all' ? filmsData : filmsData.filter(f=>f.version===version);
+  if (!filtered.length) {
+    const p=document.createElement('p'); p.className='status-msg'; p.setAttribute('role','status');
+    p.textContent='Cap pel·lícula amb aquesta versió a la cartellera actual.'; c.appendChild(p); return;
+  }
+  filtered.forEach((f,i)=>{ const card=createCard(f); card.style.animationDelay=`${i*.05}s`; c.appendChild(card); });
+}
+
+
+
+// ── MOBILE NAV ──
+function toggleNav(btn) {
+  const nav=document.getElementById('mobile-nav');
+  const exp=btn.getAttribute('aria-expanded')==='true';
+  btn.setAttribute('aria-expanded',!exp); nav.setAttribute('aria-hidden',exp);
+  nav.classList.toggle('open',!exp); document.body.style.overflow=exp?'':'hidden';
+}
+function closeMobileNav() {
+  const nav=document.getElementById('mobile-nav'), btn=document.querySelector('.hamburger');
+  btn.setAttribute('aria-expanded','false'); nav.setAttribute('aria-hidden','true');
+  nav.classList.remove('open'); document.body.style.overflow='';
+}
+
+// ── INIT ──
+async function init() {
+  // Skeletons
+  ['mainCarousel','upcomingCarousel'].forEach(id => {
+    const el = document.getElementById(id);
+    for(let i=0;i<6;i++){const s=document.createElement('div');s.className='skel-card skeleton';el.appendChild(s);}
+  });
+
+  updateStats();
+  renderCinemas();
+
+
+  // Fetch real posters from TMDB (failures handled gracefully inside fetchPosters)
+  try {
+    await fetchPosters([...filmsData, ...upcomingData]);
+  } catch(e) {
+    console.warn('[FILMCAT] Could not fetch posters:', e.message);
+  }
+  renderAll();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
