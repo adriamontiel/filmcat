@@ -6,7 +6,7 @@
 <meta name="description" content="FILMCAT — Totes les pel·lícules en català als cinemes de Catalunya. Horaris, sessions i cinemes actualitzats diàriament.">
 <meta name="theme-color" content="#0a0a0c">
 <!-- Security headers -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://image.tmdb.org data: blob:; connect-src https://api.themoviedb.org https://www.youtube.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://image.tmdb.org data: blob:; connect-src https://api.themoviedb.org https://www.youtube.com https://filmcat-api.vercel.app; frame-ancestors 'none'; base-uri 'none'; form-action 'none';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="X-Frame-Options" content="DENY">
 <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
@@ -477,9 +477,10 @@ function sanitizeUrl(url) {
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
 const TMDB_BIG = 'https://image.tmdb.org/t/p/w780';
 const TMDB_KEY = '2dca580c2a14b55200e784d157207b4d';
+const API_URL = 'https://filmcat-api.vercel.app';
 
 // NO hardcoded IDs — titles and years are used to search & verify on TMDB
-const filmsData = [
+let filmsData = [
   { id:1, searchTitle:"Balandrau", year:2026, version:"VD", genre:"Drama · Aventura", duration:"116 min",
     title:"Balandrau, Vent Salvatge",
     synopsis:"Basada en fets reals, narra el temporal més violent que s'ha viscut al Pirineu català. El 30 de desembre del 2000, nou excursionistes moren quan el «torb» desencadena la pitjor tempesta de la historia dels Pirineus. Amb Álvaro Cervantes, Bruna Cusí i Marc Martínez.",
@@ -522,7 +523,7 @@ const filmsData = [
     sessions:[{cinema:"Cinema Catalunya",city:"Terrassa",times:["10:00","12:00","16:30"],lang:"VD"},{cinema:"Cinesa Diagonal Mar",city:"Barcelona",times:["11:30","14:00","17:30"],lang:"VD"}]},
 ];
 
-const upcomingData = [
+let upcomingData = [
   { id:101, searchTitle:"Justice League Crisis on Infinite Earths", year:2024, version:"VOSC", genre:"Animació · Acció", duration:"94 min",
     title:"Justice League: Crisis",
     synopsis:"La Lliga de la Justícia s'enfronta a la seva crisi existencial més gran. El multiunivers amenaça amb desaparèixer.",
@@ -537,7 +538,7 @@ const upcomingData = [
     color1:"#0a131a", color2:"#0d2540", posterPath:null, backdropPath:null, sessions:[] },
 ];
 
-const cinemasData = [
+let cinemasData = [
   {name:"Cinemes Verdi",city:"Barcelona",address:"C/ Verdi 32, Gràcia",films:6},
   {name:"Cinema Catalunya",city:"Terrassa",address:"C/ Sant Pere 9",films:4},
   {name:"Filmoteca de Catalunya",city:"Barcelona",address:"Pl. Salvador Seguí 1-9",films:5},
@@ -866,6 +867,87 @@ function closeMobileNav() {
 }
 
 // ── INIT ──
+// ── MAP GENCAT FILM TO INTERNAL FORMAT ──
+function mapFilm(f, id) {
+  // Pick a deterministic gradient color based on genre
+  const colors = {
+    'Acció':    ['#1a0808','#3d1010'], 'Animació': ['#0a1a1a','#0d3a2a'],
+    'Drama':    ['#0a0a1a','#151535'], 'Comèdia':  ['#1a1205','#3d2a08'],
+    'Musical':  ['#0d0a1a','#1e0a35'], 'Aventura': ['#051a1a','#073040'],
+    'Terror':   ['#0a0808','#200808'], 'Fantasia': ['#0a0510','#1a0a30'],
+  };
+  const genre = f.genre || '';
+  const key = Object.keys(colors).find(k => genre.includes(k)) || 'Drama';
+  const [color1, color2] = colors[key];
+
+  // Build searchTitle: use original title if available, else catalan title
+  const searchTitle = f.titleOriginal && f.titleOriginal !== f.title
+    ? f.titleOriginal : f.title;
+
+  // Get release year from sessions or fallback to current year
+  const year = f.year ? parseInt(f.year) : new Date().getFullYear();
+
+  return {
+    id,
+    title: f.title || f.titleEs || 'Sense títol',
+    searchTitle,
+    year,
+    version: f.version || 'VD',
+    genre: f.genre || 'Cinema',
+    duration: f.duration ? `${f.duration} min` : '',
+    synopsis: f.synopsis || '',
+    color1, color2,
+    posterPath: f.poster || null,
+    backdropPath: null,
+    sessions: (f.sessions || []).map(s => ({
+      cinema: s.cinema,
+      city: s.city,
+      address: s.address || '',
+      lat: s.lat,
+      lng: s.lng,
+      lang: s.lang || f.version || 'VD',
+      times: s.times.map(t => t.time || t).filter(Boolean),
+    })),
+  };
+}
+
+// ── FETCH LIVE DATA FROM GENCAT VIA PROXY ──
+async function fetchLiveData() {
+  try {
+    const r = await fetch(`${API_URL}/api/cartellera`, { signal: AbortSignal.timeout(12000) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+
+    // Replace static data with live data
+    filmsData = data.films.map((f, i) => mapFilm(f, i + 1));
+    upcomingData = (data.comingSoon || []).map((f, i) => mapFilm(f, 100 + i));
+    console.log(`[FILMCAT] Dades reals carregades: ${filmsData.length} pel·lícules`);
+    return true;
+  } catch(e) {
+    console.warn('[FILMCAT] Usant dades de mostra:', e.message);
+    return false; // fall back to static data
+  }
+}
+
+async function fetchLiveCinemas() {
+  try {
+    const r = await fetch(`${API_URL}/api/cinemes`, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    if (!data.ok || !data.cinemas?.length) throw new Error('Sense cinemes');
+    cinemasData = data.cinemas.map(c => ({
+      name: c.name,
+      city: c.city,
+      address: c.address || '',
+      films: 0, // will show 0 if not in data
+    }));
+    console.log(`[FILMCAT] ${cinemasData.length} cinemes carregats`);
+  } catch(e) {
+    console.warn('[FILMCAT] Usant cinemes de mostra:', e.message);
+  }
+}
+
 async function init() {
   // Skeletons
   ['mainCarousel','upcomingCarousel'].forEach(id => {
@@ -873,9 +955,11 @@ async function init() {
     for(let i=0;i<6;i++){const s=document.createElement('div');s.className='skel-card skeleton';el.appendChild(s);}
   });
 
+  // Fetch live data from Gencat (falls back to static data if unavailable)
+  await Promise.all([fetchLiveData(), fetchLiveCinemas()]);
+
   updateStats();
   renderCinemas();
-
 
   // Fetch real posters from TMDB (failures handled gracefully inside fetchPosters)
   try {
