@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="FILMCAT — Totes les pel·lícules en català als cinemes de Catalunya. Horaris, sessions i cinemes actualitzats diàriament.">
 <meta name="theme-color" content="#0a0a0c">
+<meta name="color-scheme" content="dark">
 <!-- Security headers -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://image.tmdb.org data: blob:; connect-src https://api.themoviedb.org https://www.youtube.com https://filmcat-api.vercel.app; frame-ancestors 'none'; base-uri 'none'; form-action 'none';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -24,7 +25,7 @@
   --muted: rgba(255,255,255,0.45); --gold: #e8c97a;
   --px: clamp(16px, 4vw, 48px); --r-card: 12px; --r-modal: 20px;
 }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; background: #0a0a0c; color-scheme: dark; }
 body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 16px; line-height: 1.5; overflow-x: hidden; min-height: 100vh; }
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
@@ -270,11 +271,7 @@ footer {
   .featured-poster { display: none; }
 }
 /* ── LIGHT MODE ── */
-@media (prefers-color-scheme: light) {
-  :root { --bg: #f4f4f8; --bg2: #ffffff; --bg3: #ebebef; --surface: #e6e6ee; --surface2: #dcdce6; --border: rgba(0,0,0,.1); --text: #111118; --text-mid: rgba(17,17,24,.72); --muted: rgba(17,17,24,.45); --red-focus: #b02319; }
-  body::before { opacity: 0.06; }
-  header { background: linear-gradient(to bottom, rgba(244,244,248,.97), rgba(244,244,248,0)); }
-}
+/* Mode fosc forçat — FILMCAT és sempre dark */
 
 /* ── TEXT ZOOM 200% (WCAG 1.4.4) ── */
 /* All rem values scale with browser/OS text zoom, px values do not.
