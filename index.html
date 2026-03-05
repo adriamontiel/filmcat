@@ -912,7 +912,7 @@ function mapFilm(f, id) {
     searchTitle,
     year,
     version: f.version || 'VD',
-    genre: f.language ? f.language.split(';')[0].trim() : 'Cinema',
+    genre: f.language ? f.language.split(';')[0].replace(/\s*\(\d+\s*%\)/, '').trim() : 'Cinema',
     duration: '',
     synopsis: f.synopsis || '',
     color1, color2,
